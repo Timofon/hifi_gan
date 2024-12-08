@@ -57,7 +57,7 @@ Follow these steps to install the project:
 3. Dowload model weights:
    
 ```
-   cd hi_fi_gan
+   cd hifi_gan
    
    python download_weights.py
 ```
