@@ -1,4 +1,4 @@
-# Automatic Speech Recognition (ASR) with PyTorch
+# Hi-Fi GAN with PyTorch
 
 <p align="center">
   <a href="#about">About</a> •
@@ -10,9 +10,9 @@
 
 ## About
 
-This repository contains a template for solving ASR task with PyTorch. This template branch is a part of the [HSE DLA course](https://github.com/markovka17/dla) ASR homework. Some parts of the code are missing (or do not follow the most optimal design choices...) and students are required to fill these parts themselves (as well as writing their own models, etc.).
+This repository contains a template for solving speech generation task with PyTorch. This template branch is a part of the [HSE DLA course](https://github.com/markovka17/dla) Neural Vocoder homework. 
 
-See the task assignment [here](https://github.com/markovka17/dla/tree/2024/hw1_asr).
+See the task assignment [here](https://github.com/markovka17/dla/tree/2024/hw3_nv).
 
 ## Installation
 
@@ -53,6 +53,14 @@ Follow these steps to install the project:
    ```bash
    pre-commit install
    ```
+
+3. Dowload model weights:
+   
+```
+   cd hi_fi_gan
+   
+   python download_weights.py
+```
 
 ## How To Use
 

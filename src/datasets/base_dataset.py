@@ -23,8 +23,7 @@ class BaseDataset(Dataset):
     def __init__(
         self,
         index,
-        text_encoder=None,
-        target_sr=16000,
+        target_sr=22050,
         limit=None,
         max_audio_length=None,
         max_text_length=None,
@@ -36,7 +35,6 @@ class BaseDataset(Dataset):
             index (list[dict]): list, containing dict for each element of
                 the dataset. The dict has required metadata information,
                 such as label and object path.
-            text_encoder (CTCTextEncoder): text encoder.
             target_sr (int): supported sample rate.
             limit (int | None): if not None, limit the total number of elements
                 in the dataset to 'limit' elements.
@@ -59,9 +57,10 @@ class BaseDataset(Dataset):
 
         self._index: list[dict] = index
 
-        self.text_encoder = text_encoder
         self.target_sr = target_sr
         self.instance_transforms = instance_transforms
+
+        self.max_sample_len = 8192
 
     def __getitem__(self, ind):
         """
@@ -81,16 +80,12 @@ class BaseDataset(Dataset):
         data_dict = self._index[ind]
         audio_path = data_dict["path"]
         audio = self.load_audio(audio_path)
-        text = data_dict["text"]
-        text_encoded = self.text_encoder.encode(text)
 
         spectrogram = self.get_spectrogram(audio)
 
         instance_data = {
             "audio": audio,
             "spectrogram": spectrogram,
-            "text": text,
-            "text_encoded": text_encoded,
             "audio_path": audio_path,
         }
 
@@ -113,6 +108,9 @@ class BaseDataset(Dataset):
         target_sr = self.target_sr
         if sr != target_sr:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
+        
+        start = random.randint(0, audio_tensor.shape[-1] - self.max_sample_len)
+        audio_tensor = audio_tensor[:, start: start + self.max_sample_len]
         return audio_tensor
 
     def get_spectrogram(self, audio):
@@ -226,14 +224,14 @@ class BaseDataset(Dataset):
             assert "path" in entry, (
                 "Each dataset item should include field 'path'" " - path to audio file."
             )
-            assert "text" in entry, (
-                "Each dataset item should include field 'text'"
-                " - object ground-truth transcription."
-            )
-            assert "audio_len" in entry, (
-                "Each dataset item should include field 'audio_len'"
-                " - length of the audio."
-            )
+            # assert "text" in entry, (
+            #     "Each dataset item should include field 'text'"
+            #     " - object ground-truth transcription."
+            # )
+            # assert "audio_len" in entry, (
+            #     "Each dataset item should include field 'audio_len'"
+            #     " - length of the audio."
+            # )
 
     @staticmethod
     def _sort_index(index):

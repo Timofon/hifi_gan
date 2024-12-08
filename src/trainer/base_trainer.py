@@ -20,9 +20,10 @@ class BaseTrainer:
         model,
         criterion,
         metrics,
-        optimizer,
-        lr_scheduler,
-        text_encoder,
+        optimizer_discriminator,
+        optimizer_generator,
+        lr_scheduler_discriminator,
+        lr_scheduler_generator,
         config,
         device,
         dataloaders,
@@ -70,9 +71,12 @@ class BaseTrainer:
 
         self.model = model
         self.criterion = criterion
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
-        self.text_encoder = text_encoder
+        self.optimizer_discriminator = optimizer_discriminator
+        self.optimizer_generator = optimizer_generator
+
+        self.lr_scheduler_discriminator = lr_scheduler_discriminator
+        self.lr_scheduler_generator = lr_scheduler_generator
+        
         self.batch_transforms = batch_transforms
 
         # define dataloaders
@@ -122,7 +126,9 @@ class BaseTrainer:
         self.metrics = metrics
         self.train_metrics = MetricTracker(
             *self.config.writer.loss_names,
-            "grad_norm",
+            "generator_grad_norm",
+            "mpd_grad_norm",
+            "msd_grad_norm",
             *[m.name for m in self.metrics["train"]],
             writer=self.writer,
         )
@@ -221,18 +227,23 @@ class BaseTrainer:
                 else:
                     raise e
 
-            self.train_metrics.update("grad_norm", self._get_grad_norm())
+            self.train_metrics.update("generator_grad_norm", self._get_grad_norm(self.model.generator))
+            self.train_metrics.update("mpd_grad_norm", self._get_grad_norm(self.model.mpd))
+            self.train_metrics.update("msd_grad_norm", self._get_grad_norm(self.model.msd))
 
             # log current results
             if batch_idx % self.log_step == 0:
                 self.writer.set_step((epoch - 1) * self.epoch_len + batch_idx)
                 self.logger.debug(
-                    "Train Epoch: {} {} Loss: {:.6f}".format(
-                        epoch, self._progress(batch_idx), batch["loss"].item()
+                    "Train Epoch: {} {} Generator loss: {:.6f}".format(
+                        epoch, self._progress(batch_idx), batch["generator_loss"].item()
                     )
                 )
                 self.writer.add_scalar(
-                    "learning rate", self.lr_scheduler.get_last_lr()[0]
+                    "learning rate discriminator", self.lr_scheduler_discriminator.get_last_lr()[0]
+                )
+                self.writer.add_scalar(
+                    "learning rate generator", self.lr_scheduler_generator.get_last_lr()[0]
                 )
                 self._log_scalars(self.train_metrics)
                 self._log_batch(batch_idx, batch)
@@ -249,6 +260,9 @@ class BaseTrainer:
         for part, dataloader in self.evaluation_dataloaders.items():
             val_logs = self._evaluation_epoch(epoch, part, dataloader)
             logs.update(**{f"{part}_{name}": value for name, value in val_logs.items()})
+        
+        self.lr_scheduler_discriminator.step()
+        self.lr_scheduler_generator.step()
 
         return logs
 
@@ -387,7 +401,7 @@ class BaseTrainer:
             )
 
     @torch.no_grad()
-    def _get_grad_norm(self, norm_type=2):
+    def _get_grad_norm(self, module, norm_type=2):
         """
         Calculates the gradient norm for logging.
 
@@ -396,7 +410,7 @@ class BaseTrainer:
         Returns:
             total_norm (float): the calculated norm.
         """
-        parameters = self.model.parameters()
+        parameters = module.parameters()
         if isinstance(parameters, torch.Tensor):
             parameters = [parameters]
         parameters = [p for p in parameters if p.grad is not None]
@@ -470,8 +484,10 @@ class BaseTrainer:
             "arch": arch,
             "epoch": epoch,
             "state_dict": self.model.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
-            "lr_scheduler": self.lr_scheduler.state_dict(),
+            "optimizer_discriminator": self.optimizer_discriminator.state_dict(),
+            "optimizer_generator": self.optimizer_generator.state_dict(),
+            "lr_scheduler_discriminator": self.lr_scheduler_discriminator.state_dict(),
+            "lr_scheduler_generator": self.lr_scheduler_generator.state_dict(),
             "monitor_best": self.mnt_best,
             "config": self.config,
         }
