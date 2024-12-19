@@ -13,10 +13,16 @@ class CustomDirDataset(BaseDataset):
 
         for path in tqdm(list(Path(audio_dir).iterdir()), desc="Processing audio files"):
             entry = {}
+            entry["path"] = str(path)
             if path.suffix in [".txt"]:
-                entry["path"] = str(path)
                 entry["spectrogram"] = self.tacotron2.encode_text(entry["path"])
-                
-                data.append(entry)
-        
+            
+            if path.suffix in [".mp3", ".wav", ".flac", ".m4a"]:                
+                audio_info = torchaudio.info(entry["path"])
+                entry["audio_len"] = audio_info.num_frames / audio_info.sample_rate
+            
+            data.append(entry)
+
+        print(f'{data=}')
+
         super().__init__(data, *args, **kwargs)

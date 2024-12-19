@@ -1,5 +1,5 @@
 test:
   _target_: src.datasets.CustomDirDataset
-  audio_dir: /home/timsenin/pytorch_project_template/data/test_dataset
-  max_audio_length: 20
-  # instance_transforms: ${transforms.instance_transforms.inference}
+  audio_dir: /home/timsenin/hifi_gan/test_dataset
+  max_audio_length: 25
+  instance_transforms: ${transforms.instance_transforms.inference}

@@ -75,7 +75,7 @@ Where `CONFIG_NAME` is a config from `src/configs` and `HYDRA_CONFIG_ARGUMENTS` 
 To run inference (evaluate the model or save predictions):
 
 ```bash
-python3 inference.py HYDRA_CONFIG_ARGUMENTS
+python3 synthesize.py inferencer.save_path='<enter your path>'
 ```
 
 ## Credits

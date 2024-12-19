@@ -3,11 +3,11 @@ defaults:
   - metrics: mos
   - datasets: inference # we do not want to run inference on training data
   - dataloader: inference
-  - transforms: example
+  - transforms: example_only_instance
   - _self_
 inferencer:
   device_tensors: ["spectrogram"] # which tensors should be on device (ex. GPU)
   device: cuda # device name or "auto"
   save_path: "example" # any name here, can be a dataset name
   seed: 1
-  from_pretrained: "saved/model_best.pth" # path to the pretrained model
+  from_pretrained: "src/model_weights/gan_best_model.pth" # path to the pretrained model

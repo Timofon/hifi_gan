@@ -16,8 +16,10 @@ def collate_fn(dataset_items: list[dict]):
 
     dataset_padded = dict()
 
+    # print(f'{dataset_items[0].keys()=}')
+
     for key in dataset_items[0].keys():
-        if key == "path":
+        if key == "audio_path":
             dataset_padded[key] = [item[key] for item in dataset_items]
         elif key == "spectrogram":
             # freq_length = dataset_items[0]["spectrogram"].shape[1]
@@ -41,5 +43,7 @@ def collate_fn(dataset_items: list[dict]):
             #     current_length = len(item["audio"][0])
             #     dataset_padded[key][i, :current_length] = item["audio"][0]
             dataset_padded[key] = torch.stack([item[key] for item in dataset_items])
+    
+    # print(f'In collate: {dataset_padded.keys()=}')
 
     return dataset_padded

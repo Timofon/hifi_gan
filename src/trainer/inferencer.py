@@ -5,6 +5,7 @@ from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 from pathlib import Path
 import torchaudio
+import os
 
 
 class Inferencer(BaseTrainer):
@@ -58,6 +59,7 @@ class Inferencer(BaseTrainer):
         self.cfg_trainer = self.config.inferencer
 
         self.device = device
+        self.model = model
 
         self.generator = model.generator
         self.batch_transforms = batch_transforms
@@ -126,9 +128,12 @@ class Inferencer(BaseTrainer):
         batch = self.transform_batch(batch)  # transform batch on device -- faster
         outputs = self.generator(batch["spectrogram"])
 
-        if metrics is not None:
-            for met in self.metrics["inference"]:
-                metrics.update(met.name, met(**batch))
+        # print(batch["spectrogram"].shape)
+        # print(outputs.shape)
+
+        # if metrics is not None:
+        #     for met in self.metrics["inference"]:
+        #         metrics.update(met.name, met(**batch))
 
         # Some saving logic. This is an example
         # Use if you need to save predictions on disk
@@ -139,12 +144,21 @@ class Inferencer(BaseTrainer):
         # clone because of
         # https://github.com/pytorch/pytorch/issues/1995
         audio = outputs[0].detach().cpu().clone()
+
+        print(f'{audio.dtype=}')
+        print(f'{audio.shape=}')
         
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
+        
+        # print(f'{self.save_path=}')
+
         if self.save_path is not None:
-            file_stem = Path(batch['path'][0]).stem
+            file_stem = Path(batch['audio_path'][0]).stem
             
             save_directory = self.save_path / part
             save_path = save_directory / f"{file_stem}.wav"
+            print(f'{save_path=}')
 
             torchaudio.save(save_path, audio, 22050)
 

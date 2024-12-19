@@ -109,8 +109,8 @@ class BaseDataset(Dataset):
         if sr != target_sr:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
         
-        start = random.randint(0, audio_tensor.shape[-1] - self.max_sample_len)
-        audio_tensor = audio_tensor[:, start: start + self.max_sample_len]
+        # start = random.randint(0, audio_tensor.shape[-1] - self.max_sample_len)
+        # audio_tensor = audio_tensor[:, start: start + self.max_sample_len]
         return audio_tensor
 
     def get_spectrogram(self, audio):
